@@ -7,14 +7,13 @@ from PIL import Image
 import json
 import os
 
-# Load API Key from Environment Variable
-API_KEY = os.getenv("AIzaSyAsosAfTOQ_DZ4XNTngcC2QQWIEZRjtHiU")
-if not API_KEY:
-    st.error("⚠️ API Key is missing! Set GEMINI_API_KEY as an environment variable.")
-    st.stop()
+# Load API key from Streamlit Secrets
+api_key = st.secrets["GEMINI_API_KEY"]
 
-# Configure Google Gemini API
-genai.configure(api_key=API_KEY)
+if not api_key:
+    raise ValueError("⚠️ API Key is missing! Set GEMINI_API_KEY in Streamlit Secrets.")
+
+genai.configure(api_key=api_key)
 
 # Function to extract text from normal PDFs
 def extract_text_from_pdf(pdf_path):
