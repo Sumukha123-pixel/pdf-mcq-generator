@@ -1,7 +1,9 @@
+poppler-utils
 streamlit
 google-generativeai
 PyMuPDF
 pytesseract
 pdf2image
 pillow
+
 
