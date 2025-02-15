@@ -6,7 +6,7 @@ import google.generativeai as genai
 import random
 
 # Configure Google Gemini API
-genai.configure(api_key="AIzaSyDRyu9YPw-vM5RKWqLHtnIaQ_ezbDLRPmQ")
+genai.configure(api_key="AIzaSyAsosAfTOQ_DZ4XNTngcC2QQWIEZRjtHiU")
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a text-based PDF."""
