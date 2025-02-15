@@ -5,8 +5,9 @@ from pdf2image import convert_from_path
 import google.generativeai as genai
 import random
 
-# Configure Google Gemini API
-genai.configure(api_key="AIzaSyAsosAfTOQ_DZ4XNTngcC2QQWIEZRjtHiU")
+# Set up Google Gemini API
+GOOGLE_API_KEY = "AIzaSyDRyu9YPw-vM5RKWqLHtnIaQ_ezbDLRPmQ"
+genai.configure(api_key=GOOGLE_API_KEY)
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a text-based PDF."""
