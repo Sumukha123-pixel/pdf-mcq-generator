@@ -26,19 +26,26 @@ def extract_text_from_image_pdf(pdf_path):
     return text
 
 def generate_mcq(text):
-    """Generate MCQs using Google Gemini AI."""
-    prompt = f"""
+    """Generate MCQs using Google Gemini AI (Flash 2.0)."""
+    prompt = f\"\"\"
     Convert the following text into multiple-choice questions.
     Each question should have 4 options, with only one correct answer.
     Return output in this format:
     Question: <question>
     Options: ["option1", "option2", "option3", "option4"]
     Answer: <correct option>
-    
+
     Text: {text}
-    """
-    response = genai.generate_text(prompt)
-    return parse_mcq(response.text)
+    \"\"\"
+
+    model = genai.GenerativeModel("gemini-1.5-flash")  # ✅ Using Flash 2.0
+    response = model.generate_content(prompt)
+
+    if response and hasattr(response, "text"):
+        return parse_mcq(response.text)
+    else:
+        st.error("AI failed to generate questions. Try another PDF!")
+        return []
 
 def parse_mcq(response_text):
     """Parse AI-generated MCQs into structured data."""
