@@ -34,7 +34,6 @@ def extract_text_from_image_pdf(pdf_path):
 
 # Function to generate MCQs using Gemini 2.0 Flash
 def generate_mcq(text):
-    """Generate MCQs from text using Google Gemini 2.0 Flash AI."""
     prompt = f"""
     Convert the following text into multiple-choice questions.
     Each question should have 4 options, with only one correct answer.
@@ -57,15 +56,16 @@ def generate_mcq(text):
         model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
 
-        if response and response.text:
-            try:
-                mcq_data = json.loads(response.text)
-                return mcq_data.get("mcqs", [])
-            except json.JSONDecodeError:
-                return []
+        # Ensure response is valid JSON
+        if response and hasattr(response, "text"):
+            mcq_data = json.loads(response.text)
+            return mcq_data.get("mcqs", [])
+        
     except Exception as e:
-        st.error(f"⚠️ AI Error: {e}")
-        return []
+        st.error(f"AI Error: {str(e)}")
+    
+    return []
+
 
 # Streamlit UI
 st.title("📄 AI-Powered PDF Quiz Generator 🎯")
