@@ -56,14 +56,16 @@ def generate_mcq(text):
         model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
 
-        # Ensure response is valid JSON
-        if response and hasattr(response, "text"):
+        # 🚀 Debugging: Print API response
+        st.write("AI Raw Response:", response)
+
+        if response and hasattr(response, "text") and response.text.strip():
             mcq_data = json.loads(response.text)
             return mcq_data.get("mcqs", [])
-        
+
     except Exception as e:
         st.error(f"AI Error: {str(e)}")
-    
+
     return []
 
 
