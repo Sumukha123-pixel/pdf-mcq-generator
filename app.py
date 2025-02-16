@@ -87,48 +87,29 @@ if uploaded_file:
             st.error("⚠️ AI failed to generate MCQs. Try another PDF!")
         else:
             st.session_state.mcqs = mcqs
+            st.session_state.answered_questions = [False] * len(mcqs)
             st.session_state.current_question = 0
-            st.session_state.score = 0
-            st.session_state.quiz_active = True
-            st.session_state.selected_option = None
-            st.session_state.show_feedback = False
-            st.session_state.answered = False
-            st.session_state.allow_next = False
 
-if "mcqs" in st.session_state and st.session_state.quiz_active:
+if "mcqs" in st.session_state:
     mcqs = st.session_state.mcqs
-    q_idx = st.session_state.current_question
-
-    if q_idx < len(mcqs):
-        question_data = mcqs[q_idx]
-        st.subheader(f"**Q{q_idx+1}: {question_data['question']}**")
-
-        if not st.session_state.answered:
-            selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{q_idx}")
-            
-            if st.button("Submit Answer"):
-                st.session_state.selected_option = selected_option
-                correct_answer = question_data["answer"]
-                
-                if st.session_state.selected_option == correct_answer:
+    for idx, question_data in enumerate(mcqs):
+        if idx > st.session_state.current_question:
+            st.write("🔒 Answer previous questions to unlock this one.")
+            break
+        
+        st.subheader(f"**Q{idx+1}: {question_data['question']}**")
+        selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}", disabled=st.session_state.answered_questions[idx])
+        
+        if not st.session_state.answered_questions[idx]:
+            if st.button(f"Submit Answer {idx}", key=f"submit_{idx}"):
+                if selected_option == question_data["answer"]:
                     st.success("✅ Correct!")
-                    st.session_state.score += 1
                 else:
-                    st.error(f"❌ Wrong! Correct answer: {correct_answer}")
+                    st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
                 
-                st.session_state.answered = True
-                st.session_state.allow_next = True
-
-        if st.session_state.answered:
-            if st.button("Next"):
+                st.session_state.answered_questions[idx] = True
                 st.session_state.current_question += 1
-                st.session_state.selected_option = None
-                st.session_state.answered = False
-                st.session_state.allow_next = False
                 st.rerun()
-    else:
-        st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
-        st.session_state.quiz_active = False
 
 
 
