@@ -117,8 +117,11 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
                 st.error(f"❌ Wrong! Correct answer: {correct_answer}")
             
             if st.button("Next"):
-                st.session_state.current_question += 1
-                st.session_state.show_feedback = False
+               st.session_state.current_question += 1
+               st.session_state.show_feedback = False
+               st.session_state.selected_option = None  # Reset selected option
+               st.rerun()  # Ensure app refreshes with updated question
+
 
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
