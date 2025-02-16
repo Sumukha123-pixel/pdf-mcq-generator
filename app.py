@@ -88,32 +88,30 @@ if uploaded_file:
         else:
             st.session_state.mcqs = mcqs
             st.session_state.current_question = 0
-            st.session_state.answered = False
 
 if "mcqs" in st.session_state:
     mcqs = st.session_state.mcqs
-    current_q = st.session_state.current_question
-    question_data = mcqs[current_q]
+    
+    for idx, question_data in enumerate(mcqs):
+        disabled = idx > st.session_state.current_question
+        fade_style = "opacity: 0.5;" if disabled else "opacity: 1.0;"
+        
+        with st.container():
+            st.markdown(f'<div style="{fade_style}">', unsafe_allow_html=True)
+            st.subheader(f"**Q{idx+1}: {question_data['question']}**")
+            selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}", disabled=disabled)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            if not disabled and "answered" not in st.session_state:
+                if st.button(f"Submit Answer {idx}", key=f"submit_{idx}"):
+                    if selected_option == question_data["answer"]:
+                        st.success("✅ Correct!")
+                    else:
+                        st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
+                    
+                    st.session_state.current_question += 1
+                    st.experimental_rerun()
 
-    st.subheader(f"**Q{current_q+1}: {question_data['question']}**")
-    selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{current_q}")
-
-    if st.button("Submit Answer"):
-        if selected_option == question_data["answer"]:
-            st.success("✅ Correct!")
-            st.session_state.answered = True
-        else:
-            st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
-            st.session_state.answered = True
-
-    if st.session_state.answered:
-        if st.button("Next Question"):
-            if st.session_state.current_question < len(mcqs) - 1:
-                st.session_state.current_question += 1
-                st.session_state.answered = False
-                st.rerun()
-            else:
-                st.write("🎉 You've completed the quiz!")
 
 
 
