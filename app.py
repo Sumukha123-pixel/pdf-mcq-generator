@@ -1,36 +1,42 @@
 import streamlit as st
 import google.generativeai as genai
-import fitz  # PyMuPDF for normal PDFs
-import pytesseract
+import fitz  # PyMuPDF for handling PDFs
+import easyocr
+import json
 from PIL import Image
 import io
-import json
 
 # Configure API Key from Streamlit secrets
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Function to extract text from normal PDFs
+# Initialize EasyOCR Reader
+reader = easyocr.Reader(['en'])
+
+# Function to extract text from PDFs (normal text-based PDFs)
 def extract_text_from_pdf(pdf_path):
     text = ""
     doc = fitz.open(pdf_path)
     for page in doc:
-        text += page.get_text("text")
+        text += page.get_text("text")  # Extract text from each page
     return text.strip()
 
-# Function to extract text from images inside PDFs using PyMuPDF
+# Function to extract text from image-based PDFs using EasyOCR
 def extract_text_from_images(pdf_path):
     text = ""
     doc = fitz.open(pdf_path)
+    
     for page in doc:
-        for img_index, img in enumerate(page.get_images(full=True)):
-            xref = img[0]
-            base_image = doc.extract_image(xref)
-            image_bytes = base_image["image"]
-            img = Image.open(io.BytesIO(image_bytes))
-            text += pytesseract.image_to_string(img) + "\n"
+        img = page.get_pixmap()  # Convert PDF page to image
+        img_bytes = img.tobytes("png")  # Convert image to PNG bytes
+        image = Image.open(io.BytesIO(img_bytes))  # Load image
+        
+        # Extract text using EasyOCR
+        extracted_text = reader.readtext(image, detail=0)
+        text += " ".join(extracted_text) + "\n"
+    
     return text.strip()
 
-# Function to generate MCQs using Gemini 2 Flash
+# Function to generate MCQs using Gemini AI
 def generate_mcq(text):
     prompt = f"""
     Convert the following text into multiple-choice questions.
@@ -49,7 +55,7 @@ def generate_mcq(text):
     
     Text: {text}
     """
-    
+
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
     
@@ -80,6 +86,7 @@ if uploaded_file and "mcqs" not in st.session_state:
     
     st.success("PDF uploaded successfully!")
     
+    # Extract text using both methods (normal & OCR)
     extracted_text = extract_text_from_pdf("temp.pdf") or extract_text_from_images("temp.pdf")
 
     if not extracted_text:
