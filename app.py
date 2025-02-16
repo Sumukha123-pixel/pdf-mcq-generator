@@ -56,9 +56,12 @@ def generate_mcq(text):
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
 
-    if response and hasattr(response, "text"):
+    if response and hasattr(response, "text") and response.text.strip():
         raw_text = response.text.strip()
-        
+
+        # ✅ Debugging: Print AI response (check in logs)
+        print("AI Raw Response:", raw_text)
+
         # ✅ Remove markdown code block (` ```json `)
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]  # Remove first 7 characters (```json)
@@ -66,11 +69,18 @@ def generate_mcq(text):
             raw_text = raw_text[:-3]  # Remove last 3 characters (```)
 
         try:
-            return json.loads(raw_text)["mcqs"]
-        except json.JSONDecodeError:
+            mcqs = json.loads(raw_text)["mcqs"]
+            if not mcqs:
+                print("⚠️ AI returned empty MCQs!")
+            return mcqs
+        except json.JSONDecodeError as e:
+            print("❌ JSON Decode Error:", str(e))
             return []
+    else:
+        print("⚠️ AI returned an empty response!")
     
     return []
+🔹 Why This Fix Works
 
 
 # Streamlit UI
