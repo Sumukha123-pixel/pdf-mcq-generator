@@ -1,30 +1,23 @@
 import streamlit as st
 import google.generativeai as genai
-import PyPDF2
+import fitz  # PyMuPDF for normal PDFs
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
 import json
-import os
 
-# Load API key from Streamlit Secrets
-api_key = st.secrets["GEMINI_API_KEY"]
-
-if not api_key:
-    raise ValueError("⚠️ API Key is missing! Set GEMINI_API_KEY in Streamlit Secrets.")
-
-genai.configure(api_key=api_key)
+# Configure API Key from Streamlit Secrets
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Function to extract text from normal PDFs
 def extract_text_from_pdf(pdf_path):
     text = ""
-    with open(pdf_path, "rb") as file:
-        reader = PyPDF2.PdfReader(file)
-        for page in reader.pages:
-            text += page.extract_text() if page.extract_text() else ""
+    doc = fitz.open(pdf_path)
+    for page in doc:
+        text += page.get_text("text")
     return text.strip()
 
-# Function to extract text from image-based (scanned) PDFs using OCR
+# Function to extract text from image-based PDFs using OCR
 def extract_text_from_image_pdf(pdf_path):
     text = ""
     images = convert_from_path(pdf_path)
@@ -32,9 +25,8 @@ def extract_text_from_image_pdf(pdf_path):
         text += pytesseract.image_to_string(image)
     return text.strip()
 
-# Function to generate MCQs using Gemini 2.0 Flash
+# Function to generate MCQs using Gemini 2 Flash
 def generate_mcq(text):
-    """Generate MCQs from text using Gemini 2 Flash."""
     prompt = f"""
     Convert the following text into multiple-choice questions.
     Each question should have 4 options, with only one correct answer.
@@ -49,43 +41,31 @@ def generate_mcq(text):
         ...
       ]
     }}
-
+    
     Text: {text}
     """
 
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
-
+    
     if response and hasattr(response, "text") and response.text.strip():
         raw_text = response.text.strip()
-
-        # ✅ Debugging: Print AI response (check in logs)
-        print("AI Raw Response:", raw_text)
-
-        # ✅ Remove markdown code block (` ```json `)
+        
+        # Remove markdown JSON formatting
         if raw_text.startswith("```json"):
-            raw_text = raw_text[7:]  # Remove first 7 characters (```json)
+            raw_text = raw_text[7:]
         if raw_text.endswith("```"):
-            raw_text = raw_text[:-3]  # Remove last 3 characters (```)
-
+            raw_text = raw_text[:-3]
+        
         try:
-            mcqs = json.loads(raw_text)["mcqs"]
-            if not mcqs:
-                print("⚠️ AI returned empty MCQs!")
-            return mcqs
-        except json.JSONDecodeError as e:
-            print("❌ JSON Decode Error:", str(e))
+            return json.loads(raw_text).get("mcqs", [])
+        except json.JSONDecodeError:
             return []
-    else:
-        print("⚠️ AI returned an empty response!")
-    
     return []
 
-
-
 # Streamlit UI
-st.title("📄 AI-Powered PDF Quiz Generator 🎯")
-st.write("Upload a PDF and play an MCQ quiz generated from its content!")
+st.title("📄 AI-Powered PDF Quiz Game 🎯")
+st.write("Upload a PDF and play a quiz generated from its content!")
 
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 
@@ -93,18 +73,16 @@ if uploaded_file:
     with open("temp.pdf", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    st.success("✅ PDF uploaded successfully!")
-
-    # Extract text from PDF
+    st.success("PDF uploaded successfully!")
+    
     extracted_text = extract_text_from_pdf("temp.pdf") or extract_text_from_image_pdf("temp.pdf")
 
     if not extracted_text:
-        st.error("⚠️ Could not extract text. Try another PDF!")
+        st.error("Could not extract text. Try another PDF!")
     else:
         st.write("✅ Extracted text successfully! Generating MCQs...")
-
         mcqs = generate_mcq(extracted_text)
-
+        
         if not mcqs:
             st.error("⚠️ AI failed to generate MCQs. Try another PDF!")
         else:
@@ -113,7 +91,6 @@ if uploaded_file:
             st.session_state.score = 0
             st.session_state.quiz_active = True
 
-# Quiz UI
 if "mcqs" in st.session_state and st.session_state.quiz_active:
     mcqs = st.session_state.mcqs
     q_idx = st.session_state.current_question
@@ -131,12 +108,13 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
                 st.session_state.score += 1
             else:
                 st.error(f"❌ Wrong! Correct answer: {correct_answer}")
-
+            
             st.session_state.current_question += 1
 
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
         st.session_state.quiz_active = False
+
 
 
 
