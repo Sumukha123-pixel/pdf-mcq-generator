@@ -92,7 +92,6 @@ if uploaded_file:
             st.session_state.quiz_active = True
             st.session_state.selected_option = None
             st.session_state.show_feedback = False
-            st.session_state.answered = False
             st.session_state.allow_next = False
 
 if "mcqs" in st.session_state and st.session_state.quiz_active:
@@ -103,32 +102,21 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
         question_data = mcqs[q_idx]
         st.subheader(f"**Q{q_idx+1}: {question_data['question']}**")
 
-        if not st.session_state.answered:
-            selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{q_idx}")
+        selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{q_idx}")
+        
+        if selected_option:
+            if selected_option == question_data["answer"]:
+                st.success("✅ Correct!")
+            else:
+                st.error("❌ Wrong!")
+                st.write(f"✅ Correct answer: {question_data['answer']}")
             
-            if st.button("Submit Answer"):
-                st.session_state.selected_option = selected_option
-                correct_answer = question_data["answer"]
-                
-                if st.session_state.selected_option == correct_answer:
-                    st.success("✅ Correct!")
-                    st.session_state.score += 1
-                else:
-                    st.error(f"❌ Wrong! Correct answer: {correct_answer}")
-                
-                st.session_state.answered = True
-                st.session_state.allow_next = True
-
-        if st.session_state.answered:
-            if st.button("Next"):
-                st.session_state.current_question += 1
-                st.session_state.selected_option = None
-                st.session_state.answered = False
-                st.session_state.allow_next = False
-                st.experimental_rerun()
+            st.session_state.current_question += 1
+            st.button("Next Question", on_click=st.experimental_rerun)
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
         st.session_state.quiz_active = False
+
 
 
 
