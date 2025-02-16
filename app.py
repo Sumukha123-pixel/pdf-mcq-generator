@@ -118,16 +118,18 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
                 
                 st.session_state.answered = True
                 st.session_state.allow_next = True
-
-        if st.session_state.allow_next and st.button("Next"):
-            st.session_state.current_question += 1
-            st.session_state.selected_option = None
-            st.session_state.answered = False
-            st.session_state.allow_next = False
-            st.rerun()
+        
+        if st.session_state.answered:
+            st.button("Next", on_click=lambda: (st.session_state.update({
+                "current_question": st.session_state.current_question + 1,
+                "selected_option": None,
+                "answered": False,
+                "allow_next": False
+            }), st.rerun()))
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
         st.session_state.quiz_active = False
+
 
 
 
