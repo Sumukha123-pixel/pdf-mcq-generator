@@ -88,6 +88,7 @@ if uploaded_file:
         else:
             st.session_state.mcqs = mcqs
             st.session_state.current_question = 0
+            st.session_state.answered = False
 
 if "mcqs" in st.session_state:
     mcqs = st.session_state.mcqs
@@ -102,15 +103,22 @@ if "mcqs" in st.session_state:
             selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}", disabled=disabled)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            if not disabled and "answered" not in st.session_state:
+            if not disabled and not st.session_state.answered:
                 if st.button(f"Submit Answer {idx}", key=f"submit_{idx}"):
                     if selected_option == question_data["answer"]:
                         st.success("✅ Correct!")
                     else:
                         st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
                     
+                    st.session_state.answered = True
+                    st.rerun()
+            
+            if st.session_state.answered and st.session_state.current_question == idx:
+                if st.button("Next Question"):
                     st.session_state.current_question += 1
-                    st.experimental_rerun()
+                    st.session_state.answered = False
+                    st.rerun()
+
 
 
 
