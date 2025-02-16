@@ -80,7 +80,7 @@ def generate_mcq(text):
         print("⚠️ AI returned an empty response!")
     
     return []
-🔹 Why This Fix Works
+
 
 
 # Streamlit UI
