@@ -69,10 +69,10 @@ st.write("Upload a PDF and play a quiz generated from its content!")
 
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 
-if uploaded_file:
+if uploaded_file and "mcqs" not in st.session_state:
     with open("temp.pdf", "wb") as f:
         f.write(uploaded_file.getbuffer())
-
+    
     st.success("PDF uploaded successfully!")
     
     extracted_text = extract_text_from_pdf("temp.pdf") or extract_text_from_image_pdf("temp.pdf")
@@ -95,7 +95,7 @@ if "mcqs" in st.session_state:
     
     for idx, question_data in enumerate(mcqs):
         disabled = idx > st.session_state.current_question
-        fade_style = "opacity: 0.5;" if disabled else "opacity: 1.0;"
+        fade_style = "opacity: 0.5; pointer-events: none;" if disabled else "opacity: 1.0;"
         
         with st.container():
             st.markdown(f'<div style="{fade_style}">', unsafe_allow_html=True)
@@ -104,20 +104,18 @@ if "mcqs" in st.session_state:
             st.markdown('</div>', unsafe_allow_html=True)
             
             if not disabled and not st.session_state.answered:
-                if st.button(f"Submit Answer {idx}", key=f"submit_{idx}"):
+                if st.button(f"Submit Answer", key=f"submit_{idx}"):
                     if selected_option == question_data["answer"]:
                         st.success("✅ Correct!")
                     else:
                         st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
                     
                     st.session_state.answered = True
-                    st.rerun()
             
             if st.session_state.answered and st.session_state.current_question == idx:
                 if st.button("Next Question"):
                     st.session_state.current_question += 1
                     st.session_state.answered = False
-                    st.rerun()
 
 
 
