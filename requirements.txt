@@ -1,9 +1,11 @@
 streamlit
 google-generativeai
-PyPDF2
-pytesseract
-pdf2image
-pillow
 pymupdf
+easyocr
+pillow
+torch
+torchvision
+numpy
+
 
 
