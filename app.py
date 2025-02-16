@@ -87,29 +87,33 @@ if uploaded_file:
             st.error("⚠️ AI failed to generate MCQs. Try another PDF!")
         else:
             st.session_state.mcqs = mcqs
-            st.session_state.answered_questions = [False] * len(mcqs)
             st.session_state.current_question = 0
+            st.session_state.answered = False
 
 if "mcqs" in st.session_state:
     mcqs = st.session_state.mcqs
-    for idx, question_data in enumerate(mcqs):
-        if idx > st.session_state.current_question:
-            st.write("🔒 Answer previous questions to unlock this one.")
-            break
-        
-        st.subheader(f"**Q{idx+1}: {question_data['question']}**")
-        selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}", disabled=st.session_state.answered_questions[idx])
-        
-        if not st.session_state.answered_questions[idx]:
-            if st.button(f"Submit Answer {idx}", key=f"submit_{idx}"):
-                if selected_option == question_data["answer"]:
-                    st.success("✅ Correct!")
-                else:
-                    st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
-                
-                st.session_state.answered_questions[idx] = True
+    current_q = st.session_state.current_question
+    question_data = mcqs[current_q]
+
+    st.subheader(f"**Q{current_q+1}: {question_data['question']}**")
+    selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{current_q}")
+
+    if st.button("Submit Answer"):
+        if selected_option == question_data["answer"]:
+            st.success("✅ Correct!")
+            st.session_state.answered = True
+        else:
+            st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
+            st.session_state.answered = True
+
+    if st.session_state.answered:
+        if st.button("Next Question"):
+            if st.session_state.current_question < len(mcqs) - 1:
                 st.session_state.current_question += 1
+                st.session_state.answered = False
                 st.rerun()
+            else:
+                st.write("🎉 You've completed the quiz!")
 
 
 
