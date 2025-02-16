@@ -88,34 +88,32 @@ if uploaded_file and "mcqs" not in st.session_state:
         else:
             st.session_state.mcqs = mcqs
             st.session_state.current_question = 0
-            st.session_state.answered = False
+            st.session_state.answered_questions = {}
 
 if "mcqs" in st.session_state:
     mcqs = st.session_state.mcqs
     
     for idx, question_data in enumerate(mcqs):
         disabled = idx > st.session_state.current_question
-        fade_style = "opacity: 0.5; pointer-events: none;" if disabled else "opacity: 1.0;"
+        fade_style = "opacity: 0.3; pointer-events: none;" if disabled else "opacity: 1.0;"
         
         with st.container():
             st.markdown(f'<div style="{fade_style}">', unsafe_allow_html=True)
             st.subheader(f"**Q{idx+1}: {question_data['question']}**")
-            selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}", disabled=disabled)
-            st.markdown('</div>', unsafe_allow_html=True)
             
-            if not disabled and not st.session_state.answered:
-                if st.button(f"Submit Answer", key=f"submit_{idx}"):
+            if idx == st.session_state.current_question:
+                selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{idx}")
+                
+                if st.button("Submit Answer", key=f"submit_{idx}"):
                     if selected_option == question_data["answer"]:
                         st.success("✅ Correct!")
                     else:
                         st.error(f"❌ Wrong! Correct answer: {question_data['answer']}")
                     
-                    st.session_state.answered = True
-            
-            if st.session_state.answered and st.session_state.current_question == idx:
-                if st.button("Next Question"):
+                    st.session_state.answered_questions[idx] = selected_option
                     st.session_state.current_question += 1
-                    st.session_state.answered = False
+            st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
