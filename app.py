@@ -34,10 +34,11 @@ def extract_text_from_image_pdf(pdf_path):
 
 # Function to generate MCQs using Gemini 2.0 Flash
 def generate_mcq(text):
+    """Generate MCQs from text using Gemini 2 Flash."""
     prompt = f"""
     Convert the following text into multiple-choice questions.
     Each question should have 4 options, with only one correct answer.
-    Return output in JSON format:
+    Return output in this format (JSON, without markdown):
     {{
       "mcqs": [
         {{
@@ -48,24 +49,27 @@ def generate_mcq(text):
         ...
       ]
     }}
-    
+
     Text: {text}
     """
 
-    try:
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(prompt)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt)
 
-        # 🚀 Debugging: Print API response
-        st.write("AI Raw Response:", response)
+    if response and hasattr(response, "text"):
+        raw_text = response.text.strip()
+        
+        # ✅ Remove markdown code block (` ```json `)
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]  # Remove first 7 characters (```json)
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]  # Remove last 3 characters (```)
 
-        if response and hasattr(response, "text") and response.text.strip():
-            mcq_data = json.loads(response.text)
-            return mcq_data.get("mcqs", [])
-
-    except Exception as e:
-        st.error(f"AI Error: {str(e)}")
-
+        try:
+            return json.loads(raw_text)["mcqs"]
+        except json.JSONDecodeError:
+            return []
+    
     return []
 
 
