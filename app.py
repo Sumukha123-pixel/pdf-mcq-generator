@@ -128,10 +128,7 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
 
 
 
-    else:
-        st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
-        st.session_state.quiz_active = False
-
+    
 
 
 
