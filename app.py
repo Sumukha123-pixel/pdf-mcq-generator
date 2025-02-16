@@ -7,6 +7,7 @@ from PIL import Image
 import json
 
 # Configure API Key from Streamlit Secrets
+import os
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Function to extract text from normal PDFs
@@ -90,6 +91,8 @@ if uploaded_file:
             st.session_state.current_question = 0
             st.session_state.score = 0
             st.session_state.quiz_active = True
+            st.session_state.selected_option = None
+            st.session_state.show_feedback = False
 
 if "mcqs" in st.session_state and st.session_state.quiz_active:
     mcqs = st.session_state.mcqs
@@ -102,14 +105,20 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
         selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{q_idx}")
 
         if st.button("Submit Answer"):
+            st.session_state.selected_option = selected_option
+            st.session_state.show_feedback = True
+
+        if st.session_state.show_feedback:
             correct_answer = question_data["answer"]
-            if selected_option == correct_answer:
+            if st.session_state.selected_option == correct_answer:
                 st.success("✅ Correct!")
                 st.session_state.score += 1
             else:
                 st.error(f"❌ Wrong! Correct answer: {correct_answer}")
             
-            st.session_state.current_question += 1
+            if st.button("Next"):
+                st.session_state.current_question += 1
+                st.session_state.show_feedback = False
 
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
