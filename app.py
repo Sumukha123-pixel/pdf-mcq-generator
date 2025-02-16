@@ -1,8 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
-import fitz  # PyMuPDF for normal PDFs and images
+import fitz  # PyMuPDF for normal PDFs
 import pytesseract
 from PIL import Image
+import io
 import json
 
 # Configure API Key from Streamlit secrets
@@ -16,7 +17,7 @@ def extract_text_from_pdf(pdf_path):
         text += page.get_text("text")
     return text.strip()
 
-# Function to extract text from image-based PDFs using OCR
+# Function to extract text from images inside PDFs using PyMuPDF
 def extract_text_from_images(pdf_path):
     text = ""
     doc = fitz.open(pdf_path)
@@ -26,7 +27,7 @@ def extract_text_from_images(pdf_path):
             base_image = doc.extract_image(xref)
             image_bytes = base_image["image"]
             img = Image.open(io.BytesIO(image_bytes))
-            text += pytesseract.image_to_string(img)
+            text += pytesseract.image_to_string(img) + "\n"
     return text.strip()
 
 # Function to generate MCQs using Gemini 2 Flash
@@ -48,7 +49,7 @@ def generate_mcq(text):
     
     Text: {text}
     """
-
+    
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
     
@@ -117,10 +118,6 @@ if "mcqs" in st.session_state:
                     st.session_state.answered_questions[idx] = selected_option
                     st.session_state.current_question += 1
             st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-    
 
 
 
