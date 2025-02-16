@@ -92,8 +92,8 @@ if uploaded_file:
             st.session_state.quiz_active = True
             st.session_state.selected_option = None
             st.session_state.show_feedback = False
-            st.session_state.allow_next = False
             st.session_state.answered = False
+            st.session_state.allow_next = False
 
 if "mcqs" in st.session_state and st.session_state.quiz_active:
     mcqs = st.session_state.mcqs
@@ -118,17 +118,18 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
                 
                 st.session_state.answered = True
                 st.session_state.allow_next = True
-        
+
         if st.session_state.answered:
-            st.button("Next", on_click=lambda: (st.session_state.update({
-                "current_question": st.session_state.current_question + 1,
-                "selected_option": None,
-                "answered": False,
-                "allow_next": False
-            }), st.rerun()))
+            if st.button("Next"):
+                st.session_state.current_question += 1
+                st.session_state.selected_option = None
+                st.session_state.answered = False
+                st.session_state.allow_next = False
+                st.experimental_rerun()
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
         st.session_state.quiz_active = False
+
 
 
 
