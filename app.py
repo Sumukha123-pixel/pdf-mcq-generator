@@ -5,7 +5,6 @@ import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
 import json
-import os
 
 # Configure API Key from Streamlit secrets
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -45,6 +44,7 @@ def generate_mcq(text):
     
     Text: {text}
     """
+
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
     
@@ -92,7 +92,8 @@ if uploaded_file:
             st.session_state.quiz_active = True
             st.session_state.selected_option = None
             st.session_state.show_feedback = False
-            st.session_state.answered_correctly = False
+            st.session_state.allow_next = False
+            st.session_state.answered = False
 
 if "mcqs" in st.session_state and st.session_state.quiz_active:
     mcqs = st.session_state.mcqs
@@ -102,28 +103,32 @@ if "mcqs" in st.session_state and st.session_state.quiz_active:
         question_data = mcqs[q_idx]
         st.subheader(f"**Q{q_idx+1}: {question_data['question']}**")
 
-        if not st.session_state.answered_correctly:
+        if not st.session_state.answered:
             selected_option = st.radio("Choose an option:", question_data["options"], key=f"q{q_idx}")
-
+            
             if st.button("Submit Answer"):
                 st.session_state.selected_option = selected_option
                 correct_answer = question_data["answer"]
                 
-                if selected_option == correct_answer:
+                if st.session_state.selected_option == correct_answer:
                     st.success("✅ Correct!")
                     st.session_state.score += 1
-                    st.session_state.answered_correctly = True
                 else:
                     st.error(f"❌ Wrong! Correct answer: {correct_answer}")
-        else:
-            if st.button("Next"):
-                st.session_state.current_question += 1
-                st.session_state.show_feedback = False
-                st.session_state.answered_correctly = False
-                st.experimental_rerun()
+                
+                st.session_state.answered = True
+                st.session_state.allow_next = True
+
+        if st.session_state.allow_next and st.button("Next"):
+            st.session_state.current_question += 1
+            st.session_state.selected_option = None
+            st.session_state.answered = False
+            st.session_state.allow_next = False
+            st.rerun()
     else:
         st.success(f"🎉 Quiz Complete! Your Score: {st.session_state.score}/{len(mcqs)}")
         st.session_state.quiz_active = False
+
 
 
 
