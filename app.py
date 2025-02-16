@@ -1,8 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
-import fitz  # PyMuPDF for normal PDFs
+import fitz  # PyMuPDF for normal PDFs and images
 import pytesseract
-from pdf2image import convert_from_path
 from PIL import Image
 import json
 
@@ -18,11 +17,16 @@ def extract_text_from_pdf(pdf_path):
     return text.strip()
 
 # Function to extract text from image-based PDFs using OCR
-def extract_text_from_image_pdf(pdf_path):
+def extract_text_from_images(pdf_path):
     text = ""
-    images = convert_from_path(pdf_path)
-    for image in images:
-        text += pytesseract.image_to_string(image)
+    doc = fitz.open(pdf_path)
+    for page in doc:
+        for img_index, img in enumerate(page.get_images(full=True)):
+            xref = img[0]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image["image"]
+            img = Image.open(io.BytesIO(image_bytes))
+            text += pytesseract.image_to_string(img)
     return text.strip()
 
 # Function to generate MCQs using Gemini 2 Flash
@@ -75,7 +79,7 @@ if uploaded_file and "mcqs" not in st.session_state:
     
     st.success("PDF uploaded successfully!")
     
-    extracted_text = extract_text_from_pdf("temp.pdf") or extract_text_from_image_pdf("temp.pdf")
+    extracted_text = extract_text_from_pdf("temp.pdf") or extract_text_from_images("temp.pdf")
 
     if not extracted_text:
         st.error("Could not extract text. Try another PDF!")
@@ -113,8 +117,6 @@ if "mcqs" in st.session_state:
                     st.session_state.answered_questions[idx] = selected_option
                     st.session_state.current_question += 1
             st.markdown('</div>', unsafe_allow_html=True)
-
-
 
 
 
